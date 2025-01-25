@@ -2,7 +2,7 @@
 /credentials/
 *.config.js
 *.credentials.js
-*.class.json
+*.clasp.json
 
 # Environment variables
 .env
