@@ -1,1 +1,35 @@
+# Credentials and configs
 /credentials/
+*.config.js
+*.credentials.js
+
+# Environment variables
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*~
+*.swp
+
+# Local development files
+dev.local.js
+local.settings.json
+
+# Dependencies
+/node_modules/
+
