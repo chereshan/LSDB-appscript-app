@@ -1,6 +1,7 @@
 // ==========================================================================
 // миграция бд google sheets в supabase
 async function migrateTasksToSupabase(gt_table_sync=undefined) {
+  console.log("=== 1. Начало migrateTasksToSupabase ===");
   const SUPABASE_CONFIG = readFromProperty('SUPABASE_CONFIG')
   if (gt_table_sync==undefined) {
     console.log('Данные получены небережливо')
@@ -9,6 +10,7 @@ async function migrateTasksToSupabase(gt_table_sync=undefined) {
     console.log('Данные получены бережливо')
   }
   try {
+    console.log("=== 2. Получение данных для миграции ===");
     const { only_gs_tasks_formatted, only_gt_and_both_tasks_formatted } = await getAllFinalFormTasksForSupabase(gt_table_sync);
     const allTasks = [...only_gs_tasks_formatted, ...only_gt_and_both_tasks_formatted];
     
@@ -23,9 +25,10 @@ async function migrateTasksToSupabase(gt_table_sync=undefined) {
     // Начинаем с максимального размера чанка
     const initialChunkSize = 1000;
     let remainingTasks = [...allTasks];
-
+    console.log("=== 3. Начало цикла while ===");
     while (remainingTasks.length > 0) {
       // Для каждой новой порции задач начинаем с максимального размера чанка
+      console.log("=== 4. Начало цикла while внутри ===");
       let chunkSize = initialChunkSize;
       let currentBatchTasks = [...remainingTasks];
       remainingTasks = [];
@@ -44,6 +47,7 @@ async function migrateTasksToSupabase(gt_table_sync=undefined) {
 
         // Пытаемся отправить чанки текущего размера
         for (let i = 0; i < chunks.length; i++) {
+          console.log(`Отправка чанка ${i + 1}/${chunks.length}`);
           try {
             const response = await UrlFetchApp.fetch(`${SUPABASE_CONFIG.url}/${SUPABASE_CONFIG.table}`, {
               method: 'POST',
@@ -127,6 +131,11 @@ async function migrateTasksToSupabase(gt_table_sync=undefined) {
 
   } catch (error) {
     console.error("Ошибка при миграции данных:", error);
+    console.error("Детали ошибки:", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     throw error;
   }
 }
@@ -443,7 +452,11 @@ function adjustAndFormatDateUTCForSupabase(inputDate) {
 // РЕАЛИЗАЦИЯ МИГРАЦИИ ИЗ GOOGLE SHEETS + ПОЛНАЯ МИГРАЦИЯ С АНТИКОЛЛИЗИЕЙ
 // ===================================================================
 async function getAllFinalFormTasksForSupabase(gt_table_sync=undefined) {
+  console.log("=== Начало getAllFinalFormTasksForSupabase ===");
+  // Логируем время начала
+  const startTime = new Date();
   let gs_tasks = await getTr_table();
+  console.log("Получены задачи из Google Sheets:", gs_tasks.length);
 
   let gs_uuids = gs_tasks
     .filter((val) => {
@@ -457,6 +470,7 @@ async function getAllFinalFormTasksForSupabase(gt_table_sync=undefined) {
     .map((val) => val.uuid);
 
   let gt_tasks = await getAllCompletedAndFormattedTasksForSupabase(gt_table_sync);
+  console.log("Получены задачи из Google Tasks:", gt_tasks.length);
   gt_uuids = gt_tasks.map((val) => {
     let uuid = val.uuid;
     if (uuid instanceof String) {
@@ -518,6 +532,8 @@ async function getAllFinalFormTasksForSupabase(gt_table_sync=undefined) {
   });
   only_gs_tasks_formatted=only_gs_tasks_formatted.map(task => normalizeTaskforSupabase(task))
   only_gt_and_both_tasks_formatted=only_gt_and_both_tasks_formatted.map(task => normalizeTaskforSupabase(task))
+  // Логируем общее время выполнения
+  console.log(`Время выполнения getAllFinalFormTasksForSupabase: ${(new Date() - startTime) / 1000}s`);
   return { only_gs_tasks_formatted, only_gt_and_both_tasks_formatted };
 }
 // ===================================================================

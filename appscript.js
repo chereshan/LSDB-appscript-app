@@ -38,9 +38,14 @@ function defunctTrigger(){
 // Царь-функция каждого дня
 //=========================================================================
 function fillOnePush() {
+  console.log("=== Начало выполнения fillOnePush ===");
+  console.time('fillOnePush');
   var regulars = checkConfigForRegulars();
+  console.log("Начало добавления выполненных задач...");
+  console.time('appendCompletedTasksToSheet');
   appendCompletedTasksToSheet()
     .then((rawData) => {
+      console.log(`Количество регулярных задач для обработки: ${Object.keys(regulars["completed"] || {}).length}`);
       for (key in regulars["completed"]) {
         var listlength = regulars["completed"][key].length;
         for (var i = 0; i < listlength; i++) {
@@ -51,10 +56,15 @@ function fillOnePush() {
       return rawData
     })
     .then((rawData)=>{
+      console.timeEnd('appendCompletedTasksToSheet');
+      console.log("=== Начало миграции в Supabase ===");
+      console.time('migrateTasksToSupabase');
       return migrateTasksToSupabase(rawData)
     })
     .then(()=>{
       console.log("Все задачи успешно добавлены в Supabase.");
+      console.timeEnd('migrateTasksToSupabase');
+      console.log("=== Завершение fillOnePush ===");
     })
     .catch((error) => {
       console.error("Произошла ошибка при добавлении задач в БД:", error);
